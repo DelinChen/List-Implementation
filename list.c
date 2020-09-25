@@ -15,8 +15,8 @@ List* List_create(){
 	struct Node_s nodes[LIST_MAX_NUM_NODES];
 	pList.size = 0;
 	pList.head = &nodes[0];
-	pList.curr = pList.head;
-	pList.tail = &nodes[LIST_MAX_NUM_NODES-1];
+	pList.curr = pList.head->prev;
+	pList.tail = &nodes[0];
 	nodes[0].prev = NULL;
 	nodes[0].data = NULL;
 	nodes[0].next = &nodes[1];
@@ -77,26 +77,85 @@ void* List_curr(List* pList){
 	return pList->curr;
 }
 
-/*
+
 // Adds the new item to pList directly after the current item, and makes item the current item. 
 // If the current pointer is before the start of the pList, the item is added at the start. If 
 // the current pointer is beyond the end of the pList, the item is added at the end. 
 // Returns 0 on success, -1 on failure.
-int List_add(List* pList, void* pItem);
+int List_add(List* pList, void* pItem){
+	if (pList->curr == pList->head->prev){
+		pList->curr = pList->head;
+		pList->head = pItem;
+		pList->size++;
+		return 0;
+	}
+	else if (pList->curr == pList->tail->next){
+		pList->curr = pList->tail;
+		pList->tail = pItem;
+		pList->size++;
+		return 0;
+	}
+	pList->curr = pList->curr->next;
+	pList->curr = pItem;
+	pList->tail = pItem;
+	pList->size++;
+	return 0;
+	if (pList->curr != pItem)
+	{
+		return -1;
+	}
+}
 
 // Adds item to pList directly before the current item, and makes the new item the current one. 
 // If the current pointer is before the start of the pList, the item is added at the start. 
 // If the current pointer is beyond the end of the pList, the item is added at the end. 
 // Returns 0 on success, -1 on failure.
-int List_insert(List* pList, void* pItem);
+int List_insert(List* pList, void* pItem){
+	if (pList->curr == pList->head->prev){
+		pList->curr = pList->head;
+		pList->head = pItem;
+		pList->size++;
+		return 0;
+	}
+	else if (pList->curr == pList->tail->next){
+		pList->curr = pList->tail;
+		pList->tail = pItem;
+		pList->size++;
+		return 0;
+	}
+	pList->curr = pList->curr->prev;
+	pList->curr = pItem;
+	pList->size++;
+	if (pList->curr != pItem){
+		return -1;
+	}
+	return 0;
+	
+}
+
 
 // Adds item to the end of pList, and makes the new item the current one. 
 // Returns 0 on success, -1 on failure.
-int List_append(List* pList, void* pItem);
+int List_append(List* pList, void* pItem){
+	pList->tail = pList->tail->next;
+	pList->tail = pItem;
+	if (pList->tail != pItem){
+		return -1;
+	}
+	return 0;
+}
 
 // Adds item to the front of pList, and makes the new item the current one. 
 // Returns 0 on success, -1 on failure.
-int List_prepend(List* pList, void* pItem);
+int List_prepend(List* pList, void* pItem){
+	pList->head = pList->head->prev;
+	pList->head = pItem;
+	if (pList->head != pItem){
+		return -1;
+	}
+	return 0;
+}
+/*
 
 // Return current item and take it out of pList. Make the next item the current one.
 // If the current pointer is before the start of the pList, or beyond the end of the pList,
