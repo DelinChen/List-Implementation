@@ -17,6 +17,7 @@ void printList(List* pList){
 	for (int i = 0; i < pList->size; ++i)
 	{
 		printf("%s ", tmp->data);
+		tmp = tmp->next;
 	}
 
 }
@@ -39,10 +40,10 @@ int main (){
 	
 	k = List_add(ls, &a);
 	k = List_add(ls, &b);
-	//k = List_add(ls, &c);
-	//k = List_add(ls, &d);
+	k = List_add(ls, &c);
+	k = List_add(ls, &d);
 	printf("There are %d nodes in the list.\n",List_count(ls));
-	//printList(ls);
+	printList(ls);
 	int* ad = List_first(ls);
 	printf("The first node is %d.\n",*ad);
 	ad = List_last(ls);

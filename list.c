@@ -37,10 +37,11 @@ List* List_create(){
 		List* pList = &All_Heads[freed_heads[headCount]];
 		headCount++;
 		pList->index = freed_heads[headCount];
-		All_Heads[freed_heads[headCount]].size = 0;
-		All_Heads[freed_heads[headCount]].head = NULL;
-		All_Heads[freed_heads[headCount]].curr = NULL;
-		All_Heads[freed_heads[headCount]].tail = NULL;
+		pList->size = 0;
+		pList->head = NULL;
+		pList->curr = NULL;
+		pList->tail = NULL;
+		return pList;
 	}
 }
 
@@ -75,8 +76,16 @@ void* List_last(List* pList){
 // If this operation advances the current item beyond the end of the pList, a NULL pointer 
 // is returned and the current item is set to be beyond end of pList.
 void* List_next(List* pList){
-	if (pList->curr == pList->tail){
-		pList->curr = pList->tail->next;
+	if (pList->curr == NULL){
+		if (pList->curr == pList->head->prev){
+			pList->curr = pList->head;
+			return pList->head->data;
+		}
+		return NULL;
+	}
+	else if(pList->curr->next == NULL){
+		pList->curr = pList->curr->next;
+		pList->curr = NULL;
 		return NULL;
 	}
 	pList->curr = pList->curr->next;
@@ -87,8 +96,16 @@ void* List_next(List* pList){
 // If this operation backs up the current item beyond the start of the pList, a NULL pointer 
 // is returned and the current item is set to be before the start of pList.
 void* List_prev(List* pList){
-	if (pList->curr == pList->head){
-		pList->curr = pList->head->prev;
+	if (pList->curr == NULL){
+		if (pList->curr == pList->tail->next){
+			pList->curr = pList->tail;
+			return pList->tail->data;
+		}
+		return NULL;
+	}
+	else if(pList->curr->prev == NULL){
+		pList->curr = pList->curr->prev;
+		pList->curr = NULL;
 		return NULL;
 	}
 	pList->curr = pList->curr->prev;
@@ -109,67 +126,68 @@ void* List_curr(List* pList){
 // the current pointer is beyond the end of the pList, the item is added at the end. 
 // Returns 0 on success, -1 on failure.
 int List_add(List* pList, void* pItem){
-	if (NodeNum >= LIST_MAX_NUM_NODES-1){
+	if (nodeCount >= LIST_MAX_NUM_NODES){
 		return -1;
 	}
-	All_Nodes[NodeNum].data = pItem;
-	NodeNum++;
-	if (pList->tail == pList->curr)
-	{
-		All_Nodes[NodeNum].next = NULL;
-		if (pList->curr == NULL) // empty list
-		{
-			All_Nodes[NodeNum].prev = NULL;
-			pList->head = &All_Nodes[NodeNum];
-		}
-		else{ // non-empty list
-			pList->curr->next = &All_Nodes[NodeNum];
-			All_Nodes[NodeNum].prev = pList->curr;
-		}
-		pList->tail = &All_Nodes[NodeNum];
-		pList->curr = pList->tail;
-		pList->size++;
-		return 0;
+	
+	// dealing with the node first
+	nodeCount++;
+	int tempIndex;
+	// node within the bound
+	if (nodePos<LIST_MAX_NUM_NODES){
+		tempIndex = nodeCount;
+		All_Nodes[tempIndex].data = pItem;
+		All_Nodes[tempIndex].index = tempIndex;
+		All_Nodes[tempIndex].next = NULL;
+		All_Nodes[tempIndex].prev = NULL;
 	}
-
-	// to add in middle
+	// node out of bound
 	else{
-		All_Nodes[NodeNum].next = pList->curr->next;
-		All_Nodes[NodeNum].prev = pList->curr;
-		pList->curr->next = &All_Nodes[NodeNum];
-		All_Nodes[NodeNum].next->prev = &All_Nodes[NodeNum];
-		pList->curr = &All_Nodes[NodeNum];
-		pList->size++;
-		return 0;
+		tempIndex = freed_nodes[nodeCount];
+		All_Nodes[tempIndex].data = pItem;
+		All_Nodes[tempIndex].index = tempIndex;
+		All_Nodes[tempIndex].next = NULL;
+		All_Nodes[tempIndex].prev = NULL;
 	}
-	/*
-	if (pList->curr == pList->head->prev){
-		pList->head = All_Nodes[NodeNum].data;
-		pList->curr = All_Nodes[NodeNum].data;
-		pList->size++;
-		return 0;
-	}
-	else if (pList->curr == NULL)
-	{
-		pList->head = All_Nodes[NodeNum].data;
-		pList->curr = All_Nodes[NodeNum].data;
-		pList->tail = All_Nodes[NodeNum].data;
-		pList->size++;
-		return 0;
-	}
-	else if (pList->curr == pList->tail->next){
-		pList->tail = All_Nodes[NodeNum].data;
-		pList->curr = pList->tail;
-		pList->size++;
-		return 0;
-	}
-	pList->curr->next = All_Nodes[NodeNum].data;
-	pList->curr->next->prev = pList->curr;
-	pList->curr = All_Nodes[NodeNum].data;
-	pList->size++;
-	return 0;
-	*/
 
+	// dealing with the list
+	pList->size++;
+	// empty list
+	if (pList->head == NULL){
+		pList->head = &All_Nodes[tempIndex];
+		pList->curr = &All_Nodes[tempIndex];
+		pList->tail = &All_Nodes[tempIndex];
+	}
+	else if (pList->curr == NULL){
+		if (pList->curr == pList->head->prev){
+			All_Nodes[tempIndex].next = pList->head;
+			All_Nodes[tempIndex].prev = pList->head->prev;
+			pList->head = &All_Nodes[tempIndex];
+			pList->curr = &All_Nodes[tempIndex];
+
+		}
+		else{
+			All_Nodes[tempIndex].prev = pList->tail;
+			pList->tail->next = &All_Nodes[tempIndex];
+			pList->tail = &All_Nodes[tempIndex];
+			pList->curr = &All_Nodes[tempIndex];
+		}
+	}
+	else{
+		if (pList->curr == pList->tail){
+			All_Nodes[tempIndex].prev = pList->tail;
+			pList->tail->next = &All_Nodes[tempIndex];
+			pList->tail = &All_Nodes[tempIndex];
+			pList->curr = &All_Nodes[tempIndex];
+		}
+		else{
+			All_Nodes[tempIndex].next = pList->curr->next;
+			All_Nodes[tempIndex].prev = pList->curr;
+			pList->curr->next->prev = &All_Nodes[tempIndex];
+			pList->curr->next = &All_Nodes[tempIndex];
+		}
+	}
+	return 0;
 }
 
 // Adds item to pList directly before the current item, and makes the new item the current one. 
@@ -177,24 +195,68 @@ int List_add(List* pList, void* pItem){
 // If the current pointer is beyond the end of the pList, the item is added at the end. 
 // Returns 0 on success, -1 on failure.
 int List_insert(List* pList, void* pItem){
-	if (pList->curr == pList->head->prev||pList->curr == NULL){
-		pList->head = pItem;
-		pList->curr = pList->head;
-		pList->size++;
-		return 0;
+	if (nodeCount >= LIST_MAX_NUM_NODES){
+		return -1;
 	}
-	else if (pList->curr == pList->tail->next){
-		pList->tail = pItem;
-		pList->curr = pList->tail;
-		pList->size++;
-		return 0;
-	}
-	pList->curr = pList->curr->prev;
-	pList->curr = pItem;
-	pList->size++;
-
-	return 0;
 	
+	// dealing with the node first
+	nodeCount++;
+	int tempIndex;
+	// node within the bound
+	if (nodePos<LIST_MAX_NUM_NODES){
+		tempIndex = nodeCount;
+		All_Nodes[tempIndex].data = pItem;
+		All_Nodes[tempIndex].index = tempIndex;
+		All_Nodes[tempIndex].next = NULL;
+		All_Nodes[tempIndex].prev = NULL;
+	}
+	// node out of bound
+	else{
+		tempIndex = freed_nodes[nodeCount];
+		All_Nodes[tempIndex].data = pItem;
+		All_Nodes[tempIndex].index = tempIndex;
+		All_Nodes[tempIndex].next = NULL;
+		All_Nodes[tempIndex].prev = NULL;
+	}
+
+	// dealing with the list
+	pList->size++;
+	// empty list
+	if (pList->head == NULL){
+		pList->head = &All_Nodes[tempIndex];
+		pList->curr = &All_Nodes[tempIndex];
+		pList->tail = &All_Nodes[tempIndex];
+	}
+
+	else if (pList->curr == NULL){
+		if (pList->curr == pList->head->prev){
+			All_Nodes[tempIndex].next = pList->head;
+			All_Nodes[tempIndex].prev = pList->head->prev;
+			pList->head = &All_Nodes[tempIndex];
+			pList->curr = &All_Nodes[tempIndex];
+
+		}
+		else{
+			All_Nodes[tempIndex].prev = pList->tail;
+			pList->tail->next = &All_Nodes[tempIndex];
+			pList->tail = &All_Nodes[tempIndex];
+			pList->curr = &All_Nodes[tempIndex];
+		}
+	}
+	else{
+		if (pList->curr == pList->head){
+			All_Nodes[tempIndex].next = pList->head;
+			pList->head = &All_Nodes[tempIndex];
+			pList->curr = &All_Nodes[tempIndex];
+		}
+		else{
+			All_Nodes[tempIndex].next = pList->curr;
+			All_Nodes[tempIndex].prev = pList->curr->prev;
+			pList->curr->prev->next = &All_Nodes[tempIndex];
+			pList->curr->prev = &All_Nodes[tempIndex];
+		}
+	}
+	return 0;
 }
 
 
