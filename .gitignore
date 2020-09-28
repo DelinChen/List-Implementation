@@ -2,3 +2,5 @@
 list
 list.h.gch
 list.h.gch
+*.out
+a.out.dSYM/Contents/Info.plist

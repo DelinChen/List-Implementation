@@ -9,27 +9,39 @@
 
 // Makes a new, empty list, and returns its reference on success. 
 // Returns a NULL pointer on failure.
+
+static Node All_Nodes[LIST_MAX_NUM_NODES];
+static List All_Heads[LIST_MAX_NUM_HEADS];
+static int freed_nodes[LIST_MAX_NUM_NODES];
+static int freed_heads[LIST_MAX_NUM_HEADS];
+static int nodeCount = 0;
+static int headCount = 0;
+static int nodePos = 0; // used to check if node out of bound;
+static int headPos = 0; // used to check if head out of bound;
+
 List* List_create(){
-	static List pList;
-	
-	struct Node_s nodes[LIST_MAX_NUM_NODES];
-	pList.size = 0;
-	pList.head = &nodes[0];
-	pList.curr = pList.head->prev;
-	pList.tail = &nodes[0];
-	nodes[0].prev = NULL;
-	nodes[0].data = NULL;
-	nodes[0].next = &nodes[1];
-	nodes[LIST_MAX_NUM_NODES-1].prev = &nodes[LIST_MAX_NUM_NODES-2];
-	nodes[LIST_MAX_NUM_NODES-1].data = NULL;
-	nodes[LIST_MAX_NUM_NODES-1].next = NULL;
-	for (int i = 1; i < LIST_MAX_NUM_NODES-1; ++i)
-	{
-		nodes[i].prev = &nodes[i-1];
-		nodes[i].data = NULL;
-		nodes[i].next = &nodes[i+1];
+	if (headCount >= LIST_MAX_NUM_HEADS){
+		return NULL;
 	}
-	return &pList;
+	if (headPos < 10){
+		List* pList = &All_Heads[headCount];
+		headCount++;
+		pList->index = headCount;
+		pList->size = 0;
+		pList->head = NULL;
+		pList->curr = NULL;
+		pList->tail = NULL;
+		return pList;
+	}
+	else{
+		List* pList = &All_Heads[freed_heads[headCount]];
+		headCount++;
+		pList->index = freed_heads[headCount];
+		All_Heads[freed_heads[headCount]].size = 0;
+		All_Heads[freed_heads[headCount]].head = NULL;
+		All_Heads[freed_heads[headCount]].curr = NULL;
+		All_Heads[freed_heads[headCount]].tail = NULL;
+	}
 }
 
 // Returns the number of items in pList.
@@ -40,25 +52,35 @@ int List_count(List* pList){
 // Returns a pointer to the first item in pList and makes the first item the current item.
 // Returns NULL and sets current item to NULL if list is empty.
 void* List_first(List* pList){
-	return pList->head;
+	if (pList->size == 0)
+	{
+		return NULL;
+	}
+	pList->curr = pList->head;
+	return pList->head->data;
 }
 
 // Returns a pointer to the last item in pList and makes the last item the current item.
 // Returns NULL and sets current item to NULL if list is empty.
 void* List_last(List* pList){
-	return pList->tail;
+	if (pList->size == 0)
+	{
+		return NULL;
+	}
+	pList->curr = pList->tail;
+	return pList->tail->data;
 }
 
 // Advances pList's current item by one, and returns a pointer to the new current item.
 // If this operation advances the current item beyond the end of the pList, a NULL pointer 
 // is returned and the current item is set to be beyond end of pList.
 void* List_next(List* pList){
-	if (pList->curr == pList->tail)
-	{
+	if (pList->curr == pList->tail){
+		pList->curr = pList->tail->next;
 		return NULL;
 	}
-	void* ptr = pList->curr->next;
-	return ptr;
+	pList->curr = pList->curr->next;
+	return pList->curr->data;
 }
 
 // Backs up pList's current item by one, and returns a pointer to the new current item. 
@@ -66,44 +88,88 @@ void* List_next(List* pList){
 // is returned and the current item is set to be before the start of pList.
 void* List_prev(List* pList){
 	if (pList->curr == pList->head){
+		pList->curr = pList->head->prev;
 		return NULL;
 	}
-	void* ptr = pList->curr->prev;
-	return ptr;
+	pList->curr = pList->curr->prev;
+	return pList->curr->data;
 }
 
 // Returns a pointer to the current item in pList.
 void* List_curr(List* pList){
-	return pList->curr;
+	if (pList->curr == NULL)
+	{
+		return NULL;
+	}
+	return pList->curr->data;
 }
-
 
 // Adds the new item to pList directly after the current item, and makes item the current item. 
 // If the current pointer is before the start of the pList, the item is added at the start. If 
 // the current pointer is beyond the end of the pList, the item is added at the end. 
 // Returns 0 on success, -1 on failure.
 int List_add(List* pList, void* pItem){
+	if (NodeNum >= LIST_MAX_NUM_NODES-1){
+		return -1;
+	}
+	All_Nodes[NodeNum].data = pItem;
+	NodeNum++;
+	if (pList->tail == pList->curr)
+	{
+		All_Nodes[NodeNum].next = NULL;
+		if (pList->curr == NULL) // empty list
+		{
+			All_Nodes[NodeNum].prev = NULL;
+			pList->head = &All_Nodes[NodeNum];
+		}
+		else{ // non-empty list
+			pList->curr->next = &All_Nodes[NodeNum];
+			All_Nodes[NodeNum].prev = pList->curr;
+		}
+		pList->tail = &All_Nodes[NodeNum];
+		pList->curr = pList->tail;
+		pList->size++;
+		return 0;
+	}
+
+	// to add in middle
+	else{
+		All_Nodes[NodeNum].next = pList->curr->next;
+		All_Nodes[NodeNum].prev = pList->curr;
+		pList->curr->next = &All_Nodes[NodeNum];
+		All_Nodes[NodeNum].next->prev = &All_Nodes[NodeNum];
+		pList->curr = &All_Nodes[NodeNum];
+		pList->size++;
+		return 0;
+	}
+	/*
 	if (pList->curr == pList->head->prev){
-		pList->curr = pList->head;
-		pList->head = pItem;
+		pList->head = All_Nodes[NodeNum].data;
+		pList->curr = All_Nodes[NodeNum].data;
+		pList->size++;
+		return 0;
+	}
+	else if (pList->curr == NULL)
+	{
+		pList->head = All_Nodes[NodeNum].data;
+		pList->curr = All_Nodes[NodeNum].data;
+		pList->tail = All_Nodes[NodeNum].data;
 		pList->size++;
 		return 0;
 	}
 	else if (pList->curr == pList->tail->next){
+		pList->tail = All_Nodes[NodeNum].data;
 		pList->curr = pList->tail;
-		pList->tail = pItem;
 		pList->size++;
 		return 0;
 	}
-	pList->curr = pList->curr->next;
-	pList->curr = pItem;
-	pList->tail = pItem;
+	pList->curr->next = All_Nodes[NodeNum].data;
+	pList->curr->next->prev = pList->curr;
+	pList->curr = All_Nodes[NodeNum].data;
 	pList->size++;
 	return 0;
-	if (pList->curr != pItem)
-	{
-		return -1;
-	}
+	*/
+
 }
 
 // Adds item to pList directly before the current item, and makes the new item the current one. 
@@ -111,24 +177,22 @@ int List_add(List* pList, void* pItem){
 // If the current pointer is beyond the end of the pList, the item is added at the end. 
 // Returns 0 on success, -1 on failure.
 int List_insert(List* pList, void* pItem){
-	if (pList->curr == pList->head->prev){
-		pList->curr = pList->head;
+	if (pList->curr == pList->head->prev||pList->curr == NULL){
 		pList->head = pItem;
+		pList->curr = pList->head;
 		pList->size++;
 		return 0;
 	}
 	else if (pList->curr == pList->tail->next){
-		pList->curr = pList->tail;
 		pList->tail = pItem;
+		pList->curr = pList->tail;
 		pList->size++;
 		return 0;
 	}
 	pList->curr = pList->curr->prev;
 	pList->curr = pItem;
 	pList->size++;
-	if (pList->curr != pItem){
-		return -1;
-	}
+
 	return 0;
 	
 }
@@ -142,6 +206,7 @@ int List_append(List* pList, void* pItem){
 	if (pList->tail != pItem){
 		return -1;
 	}
+	pList->size++;
 	return 0;
 }
 
@@ -153,19 +218,38 @@ int List_prepend(List* pList, void* pItem){
 	if (pList->head != pItem){
 		return -1;
 	}
+	pList->size++;
 	return 0;
 }
-/*
+
 
 // Return current item and take it out of pList. Make the next item the current one.
 // If the current pointer is before the start of the pList, or beyond the end of the pList,
 // then do not change the pList and return NULL.
-void* List_remove(List* pList);
+void* List_remove(List* pList){
+	if (pList->curr == NULL){
+		return NULL;
+	}
+	void* ptr = pList->curr;
+	pList->curr = NULL;
+	pList->curr = pList->curr->next;
+	return ptr;
+}
+
 
 // Adds pList2 to the end of pList1. The current pointer is set to the current pointer of pList1. 
 // pList2 no longer exists after the operation; its head is available
 // for future operations.
-void List_concat(List* pList1, List* pList2);
+void List_concat(List* pList1, List* pList2){
+	if (pList1->size + pList2->size >100)
+	{
+		return;
+	}
+	pList1->tail->next = pList2->head;
+	pList1->tail = pList2->tail;
+	pList1->size += pList2->size;
+}
+/*
 
 // Delete pList. pItemFreeFn is a pointer to a routine that frees an item. 
 // It should be invoked (within List_free) as: (*pItemFreeFn)(itemToBeFreedFromNode);

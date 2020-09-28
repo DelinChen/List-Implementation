@@ -11,6 +11,7 @@
 
 typedef struct Node_s Node;
 struct Node_s {
+	int index;
 	void* data;
 	struct Node_s* prev;
 	struct Node_s* next;
@@ -23,6 +24,7 @@ enum ListOutOfBounds {
 };
 typedef struct List_s List;
 struct List_s{
+	int index;
 	int size;
 	Node* head;
 	Node* curr;
