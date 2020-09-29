@@ -23,30 +23,31 @@ void printList(List* pList){
 }
 int main (){
 	printf("Starting tests...\n");
+	List* ls1;
 
-	List* ls = List_create();
-	if (ls==NULL)
-	{
+	// Test 1
+	printf("Testing List_create\n");
+	ls1 = List_create();
+	if (ls1==NULL){
 		printf("List create failed.\n");
 		return 0;
 	}
 	printf("List create succeed.\n");
-	printf("There are %d nodes in the list.\n",List_count(ls));
 	int a = 1;
 	int b = 2;
 	int c = 3;
 	int d = 4;
 	int k;
 	
-	k = List_add(ls, &a);
-	k = List_add(ls, &b);
-	k = List_add(ls, &c);
-	k = List_add(ls, &d);
-	printf("There are %d nodes in the list.\n",List_count(ls));
-	printList(ls);
-	int* ad = List_first(ls);
+	k = List_add(ls1, &a);
+	k = List_add(ls1, &b);
+	k = List_add(ls1, &c);
+	k = List_add(ls1, &d);
+	printf("There are %d nodes in the list.\n",List_count(ls1));
+	//printList(ls1);
+	int* ad = List_first(ls1);
 	printf("The first node is %d.\n",*ad);
-	ad = List_last(ls);
+	ad = List_last(ls1);
 	printf("The last node is %d.\n",*ad);
 	
 
