@@ -1,3 +1,6 @@
+// CMPT 300 Assignment 1
+// Author: Delin Chen
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "list.h"
@@ -184,7 +187,7 @@ int List_add(List* pList, void* pItem){
 			All_Nodes[tempIndex].next = pList->curr->next;
 			All_Nodes[tempIndex].prev = pList->curr;
 			pList->curr->next->prev = &All_Nodes[tempIndex];
-			pList->curr->next = &All_Nodes[tempIndex];
+			pList->curr = &All_Nodes[tempIndex];
 		}
 	}
 	return 0;
@@ -246,6 +249,7 @@ int List_insert(List* pList, void* pItem){
 	else{
 		if (pList->curr == pList->head){
 			All_Nodes[tempIndex].next = pList->head;
+			pList->head->prev = &All_Nodes[tempIndex];
 			pList->head = &All_Nodes[tempIndex];
 			pList->curr = &All_Nodes[tempIndex];
 		}
@@ -253,7 +257,7 @@ int List_insert(List* pList, void* pItem){
 			All_Nodes[tempIndex].next = pList->curr;
 			All_Nodes[tempIndex].prev = pList->curr->prev;
 			pList->curr->prev->next = &All_Nodes[tempIndex];
-			pList->curr->prev = &All_Nodes[tempIndex];
+			pList->curr = &All_Nodes[tempIndex];
 		}
 	}
 	return 0;
@@ -296,6 +300,7 @@ int List_append(List* pList, void* pItem){
 		All_Nodes[tempIndex].prev = pList->tail;
 		pList->tail->next = &All_Nodes[tempIndex];
 		pList->tail = &All_Nodes[tempIndex];
+		pList->curr = &All_Nodes[tempIndex];
 	}
 	return 0;
 }
@@ -336,6 +341,7 @@ int List_prepend(List* pList, void* pItem){
 		All_Nodes[tempIndex].next = pList->head;
 		pList->head->prev = &All_Nodes[tempIndex];
 		pList->head = &All_Nodes[tempIndex];
+		pList->curr = &All_Nodes[tempIndex];
 	}
 	return 0;
 }
@@ -384,8 +390,13 @@ void List_concat(List* pList1, List* pList2){
 	pList1->tail->next = pList2->head;
 	pList1->tail = pList2->tail;
 	pList1->size += pList2->size;
+	pList2->head->prev = pList1->tail;
 	headCount--;
 	freed_heads[headCount] = pList2->index;
+	pList2->head = NULL;
+	pList2->tail = NULL;
+	pList2->curr = NULL;
+	pList2->size = 0;
 	pList2 = NULL;
 }
 
@@ -396,13 +407,15 @@ void List_concat(List* pList1, List* pList2){
 // available for future operations.
 typedef void (*FREE_FN)(void* pItem);
 void List_free(List* pList, FREE_FN pItemFreeFn){
-	for (Node* temp = pList->head; temp != NULL; temp = temp->next){
-		nodeCount--;
-		freed_nodes[nodeCount] = temp->index;
-		pItemFreeFn(&temp);
+	while(pList->size != 0){
+		List_trim(pList);
 	}
 	headCount--;
 	freed_heads[headCount] = pList->index;
+	pList->curr = NULL;
+	pList->head = NULL;
+	pList->tail = NULL;
+	pList->size = 0;
 	pList = NULL;
 }
 
@@ -414,6 +427,7 @@ void* List_trim(List* pList){
 	}
 	void* temp = pList->tail->data;
 	nodeCount--;
+	pList->size--;
 	if (pList->head == pList->tail){
 		freed_nodes[nodeCount] = pList->head->index;
 		pList->head = NULL;
@@ -422,7 +436,7 @@ void* List_trim(List* pList){
 		return temp;
 	}
 	else{
-		freed_nodes[nodeCount] = pList->head->index;
+		freed_nodes[nodeCount] = pList->index;
 		pList->tail = pList->tail->prev;
 		pList->tail->next = NULL;
 		pList->curr = pList->tail;
@@ -447,10 +461,10 @@ void* List_search(List* pList, COMPARATOR_FN pComparator, void* pComparisonArg){
 	if (pList->curr == NULL){
 		return NULL;
 	}
-	
+	Node* temp;
 	bool result;
-	for (Node* temp = pList->curr; temp != NULL; temp = temp->next){
-		result = pComparator(temp->data, comparisonArg);
+	for (temp = pList->curr; temp != NULL; temp = temp->next){
+		result = pComparator(temp->data, pComparisonArg);
 		if (result == true){
 			break;
 		}
